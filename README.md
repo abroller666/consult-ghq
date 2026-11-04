@@ -24,6 +24,9 @@ Select a [ghq](https://github.com/x-motemen/ghq)-managed repository with
 full paths. Selecting one calls `consult-ghq-action`
 (default: `project-switch-project`).
 
+With multiple ghq roots, a repository name that exists under more than one
+root is shown with its root appended, e.g. `github.com/foo/bar [~/ghq]`.
+
 ## Customization
 
 | Variable              | Default                   | Description                              |

@@ -55,20 +55,41 @@ Signal a `user-error' on non-zero exit, including ghq's stderr."
             (split-string (buffer-string) "\n" t)))
       (delete-file stderr))))
 
+(defun consult-ghq--roots ()
+  "Return all ghq roots as directory names, longest first."
+  (sort (mapcar (lambda (root) (file-name-as-directory (expand-file-name root)))
+                (consult-ghq--call "root" "--all"))
+        (lambda (a b) (> (length a) (length b)))))
+
+(defun consult-ghq--split (dir roots)
+  "Return (ROOT . NAME) for repository DIR, using the longest match in ROOTS.
+ROOT is nil when DIR is under none of ROOTS; NAME is then the full path."
+  (if-let* ((root (cl-find-if (lambda (r) (string-prefix-p r dir)) roots)))
+      (cons root (directory-file-name (substring dir (length root))))
+    (cons nil (abbreviate-file-name (directory-file-name dir)))))
+
 (defun consult-ghq--candidates ()
-  "Return ghq candidates: display names carrying their absolute path."
-  (let ((names (consult-ghq--call "list"))
-        (paths (consult-ghq--call "list" "--full-path")))
-    (unless names
+  "Return ghq candidates: display names carrying their absolute path.
+Names that occur under several roots are suffixed with their root."
+  (let* ((roots (consult-ghq--roots))
+         (dirs (mapcar (lambda (path) (file-name-as-directory (expand-file-name path)))
+                       (consult-ghq--call "list" "--full-path")))
+         (splits (mapcar (lambda (dir) (consult-ghq--split dir roots)) dirs))
+         (counts (make-hash-table :test #'equal)))
+    (unless dirs
       (user-error "No ghq repositories found"))
-    (unless (= (length names) (length paths))
-      (error "ghq list output mismatch (%d names, %d paths)"
-             (length names) (length paths)))
+    (dolist (split splits)
+      (cl-incf (gethash (cdr split) counts 0)))
     (cl-mapcar
-     (lambda (name path)
-       (propertize name 'consult-ghq-directory
-                   (file-name-as-directory (expand-file-name path))))
-     names paths)))
+     (lambda (dir split)
+       (let ((root (car split))
+             (name (cdr split)))
+         (propertize
+          (if (and root (> (gethash name counts) 1))
+              (format "%s [%s]" name (abbreviate-file-name (directory-file-name root)))
+            name)
+          'consult-ghq-directory dir)))
+     dirs splits)))
 
 (defun consult-ghq--lookup (selected candidates &rest _)
   "Return the directory of SELECTED among CANDIDATES."
