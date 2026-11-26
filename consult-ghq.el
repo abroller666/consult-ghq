@@ -2,7 +2,7 @@
 
 ;; Author: maruko
 ;; URL: https://github.com/abroller666/consult-ghq
-;; Version: 0.2.0
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "29.1") (consult "1.0"))
 ;; Keywords: convenience, tools
 
@@ -25,8 +25,11 @@
   "Name or path of the ghq executable."
   :type 'string)
 
-(defcustom consult-ghq-action #'project-switch-project
-  "Function called with the selected repository directory."
+(defcustom consult-ghq-action #'consult-ghq-find-file
+  "Function called with the selected repository directory.
+The default, `consult-ghq-find-file', prompts for a file in the
+repository right away.  Use `project-switch-project' to get its
+command menu instead."
   :type 'function)
 
 (defvar consult-ghq-history nil
@@ -102,9 +105,16 @@ Names that occur under several roots are suffixed with their root."
     (concat "  " (propertize (abbreviate-file-name (directory-file-name dir))
                              'face 'completions-annotations))))
 
+(defun consult-ghq-find-file (directory)
+  "Switch to the project in DIRECTORY and select a file in it."
+  (let ((project-switch-commands #'project-find-file))
+    (project-switch-project directory)))
+
 ;;;###autoload
 (defun consult-ghq ()
-  "Select a ghq repository with Consult and open it as a project."
+  "Select a ghq repository with Consult, then a file in it.
+What happens after the repository is selected is set by
+`consult-ghq-action'."
   (interactive)
   (let ((directory
          (consult--read
