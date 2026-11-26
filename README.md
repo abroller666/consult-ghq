@@ -21,8 +21,8 @@ Select a [ghq](https://github.com/x-motemen/ghq)-managed repository with
 ## Usage
 
 `M-x consult-ghq` lists repositories from `ghq list`, annotated with their
-full paths. Selecting one calls `consult-ghq-action`
-(default: `project-switch-project`).
+full paths. Selecting one opens it as a project and immediately prompts
+for a file in it, like `projectile-switch-project`.
 
 With multiple ghq roots, a repository name that exists under more than one
 root is shown with its root appended, e.g. `github.com/foo/bar [~/ghq]`.
@@ -32,7 +32,13 @@ root is shown with its root appended, e.g. `github.com/foo/bar [~/ghq]`.
 | Variable              | Default                   | Description                              |
 |-----------------------|---------------------------|------------------------------------------|
 | `consult-ghq-program` | `"ghq"`                   | Name or path of the ghq executable       |
-| `consult-ghq-action`  | `project-switch-project`  | Function called with the selected directory |
+| `consult-ghq-action`  | `consult-ghq-find-file`   | Function called with the selected directory |
+
+Example: show the `project-switch-project` command menu, as before 0.3.0.
+
+```elisp
+(setq consult-ghq-action #'project-switch-project)
+```
 
 Example: open the repository with Dired instead.
 

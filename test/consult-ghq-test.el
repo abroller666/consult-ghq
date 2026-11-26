@@ -52,4 +52,14 @@
     (should (equal (consult-ghq-test--alist (consult-ghq--candidates))
                    '(("/elsewhere/repo" . "/elsewhere/repo/"))))))
 
+;; project-find-file must run in the selected repository, not show a menu.
+(ert-deftest consult-ghq-test-find-file ()
+  (let (seen)
+    (cl-letf (((symbol-function 'project-find-file)
+               (lambda () (interactive) (setq seen project-current-directory-override)))
+              ((symbol-function 'project--switch-project-command)
+               (lambda () (error "Command menu shown"))))
+      (consult-ghq-find-file "/r/github.com/x/one/"))
+    (should (equal seen "/r/github.com/x/one/"))))
+
 ;;; consult-ghq-test.el ends here
